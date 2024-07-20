@@ -7,7 +7,6 @@ from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 import os
 
-# Create Flask app with custom template folder
 app = Flask(__name__, template_folder=os.path.dirname(__file__))
 
 loaded_chunks = []
@@ -64,13 +63,14 @@ def recommend(movie):
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    movie_titles = movies['title'].values
     if request.method == 'POST':
         selected_movie = request.form['movie']
         names, posters = recommend(selected_movie)
         recommendations = list(zip(names, posters))
-        return render_template('index.html', movie_titles=movies['title'].values, recommendations=recommendations, show_recommendations=True)
+        return render_template('index.html', movie_titles=movie_titles, recommendations=recommendations, show_recommendations=True)
     
-    return render_template('index.html', movie_titles=movies['title'].values, recommendations=None, show_recommendations=False)
+    return render_template('index.html', movie_titles=movie_titles, recommendations=None, show_recommendations=False)
 
 if __name__ == '__main__':
     app.run(debug=True)
