@@ -1,4 +1,4 @@
-import streamlit as st
+from flask import Flask, render_template, request
 import pickle as pkl
 import pandas as pd
 import numpy as np
@@ -6,6 +6,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 
+app = Flask(__name__)
 
 loaded_chunks = []
 
@@ -14,20 +15,14 @@ i = 0
 while True:
     try:
         with open(f'similarity_chunk_{i}.pkl', 'rb') as file:
-            chunk = pickle.load(file)
+            chunk = pkl.load(file)
             loaded_chunks.append(chunk)
         i += 1
     except FileNotFoundError:
         break
 
 # Concatenate the chunks back into the full similarity matrix
-similarity= np.vstack(loaded_chunks)
-
-
-
-
-
-
+similarity = np.vstack(loaded_chunks)
 
 movies_dict = pkl.load(open("movies_dict.pkl", 'rb'))
 movies = pd.DataFrame(movies_dict)
@@ -45,7 +40,7 @@ def fetch_poster(movie_id):
         data = response.json()
         return "https://image.tmdb.org/t/p/w500/" + data['poster_path']
     except requests.exceptions.RequestException as e:
-        st.error(f"Error fetching poster: {e}")
+        print(f"Error fetching poster: {e}")
         return None
 
 def recommend(movie):
@@ -65,28 +60,18 @@ def recommend(movie):
             recommended_movies_poster.append('')  # Add a placeholder or default image URL if necessary
     return recommended_movies, recommended_movies_poster
 
-# Streamlit app
-st.title('Movie Recommender System')
+@app.route('/')
+def index():
+    movie_titles = movies['title'].values
+    return render_template('index.html', movie_titles=movie_titles)
 
-selected_movie_name = st.selectbox("Select a movie", movies['title'].values)
+@app.route('/recommend', methods=['POST'])
+def get_recommendations():
+    selected_movie = request.form['movie']
+    names, posters = recommend(selected_movie)
 
-if st.button("Recommend"):
-    names, posters = recommend(selected_movie_name)
+    recommendations = zip(names, posters)
+    return render_template('recommendations.html', recommendations=recommendations)
 
-    col1, col2, col3, col4, col5 = st.columns(5)
-    if names:
-        with col1:
-            st.text(names[0])
-            st.image(posters[0] if posters[0] else "https://via.placeholder.com/150")
-        with col2:
-            st.text(names[1])
-            st.image(posters[1] if posters[1] else "https://via.placeholder.com/150")
-        with col3:
-            st.text(names[2])
-            st.image(posters[2] if posters[2] else "https://via.placeholder.com/150")
-        with col4:
-            st.text(names[3])
-            st.image(posters[3] if posters[3] else "https://via.placeholder.com/150")
-        with col5:
-            st.text(names[4])
-            st.image(posters[4] if posters[4] else "https://via.placeholder.com/150")
+if __name__ == '__main__':
+    app.run(debug=True)
