@@ -5,8 +5,10 @@ import numpy as np
 import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
+import os
 
-app = Flask(__name__)
+# Create Flask app with custom template folder
+app = Flask(__name__, template_folder=os.path.dirname(__file__))
 
 loaded_chunks = []
 
@@ -35,7 +37,7 @@ def fetch_poster(movie_id):
     session.mount('https://', adapter)
 
     try:
-        response = session.get('https://api.themoviedb.org/3/movie/{}?api_key=22c225fdbfdc669303e015e9f5c526f0&language=en-US'.format(movie_id))
+        response = session.get(f'https://api.themoviedb.org/3/movie/{movie_id}?api_key=22c225fdbfdc669303e015e9f5c526f0&language=en-US')
         response.raise_for_status()
         data = response.json()
         return "https://image.tmdb.org/t/p/w500/" + data['poster_path']
@@ -60,18 +62,15 @@ def recommend(movie):
             recommended_movies_poster.append('')  # Add a placeholder or default image URL if necessary
     return recommended_movies, recommended_movies_poster
 
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])
 def index():
-    movie_titles = movies['title'].values
-    return render_template('index.html', movie_titles=movie_titles)
-
-@app.route('/recommend', methods=['POST'])
-def get_recommendations():
-    selected_movie = request.form['movie']
-    names, posters = recommend(selected_movie)
-
-    recommendations = zip(names, posters)
-    return render_template('recommendations.html', recommendations=recommendations)
+    if request.method == 'POST':
+        selected_movie = request.form['movie']
+        names, posters = recommend(selected_movie)
+        recommendations = list(zip(names, posters))
+        return render_template('index.html', movie_titles=movies['title'].values, recommendations=recommendations, show_recommendations=True)
+    
+    return render_template('index.html', movie_titles=movies['title'].values, recommendations=None, show_recommendations=False)
 
 if __name__ == '__main__':
     app.run(debug=True)
