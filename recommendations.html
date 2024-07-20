@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Recommendations</title>
+    <style>
+      body {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        font-family: Arial, sans-serif;
+      }
+      h1 {
+        margin-bottom: 20px;
+      }
+      .recommendations {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 20px;
+      }
+      .recommendation {
+        text-align: center;
+      }
+      a {
+        margin-top: 20px;
+        text-decoration: none;
+        color: #000;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Recommended Movies</h1>
+    <div class="recommendations">
+      {% for name, poster in recommendations %}
+      <div class="recommendation">
+        <p>{{ name }}</p>
+        <img
+          src="{{ poster if poster else 'https://via.placeholder.com/150' }}"
+          alt="{{ name }}"
+          style="width: 150px"
+        />
+      </div>
+      {% endfor %}
+    </div>
+    <a href="/">Go back</a>
+  </body>
+</html>
